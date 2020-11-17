@@ -22,7 +22,7 @@ $query->execute();
 //On stocke le résultat dans un tableau associatif
 $result = $query ->fetchAll(PDO::FETCH_ASSOC); //Permet de demander que je veux que dans mes resultat que les information des titre dans mes collonnes
 
-require_once ('assets/require/close.php');
+require_once('assets/require/close.php');
 
 ?>
 
