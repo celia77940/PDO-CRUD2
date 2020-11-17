@@ -1,3 +1,9 @@
+<?php
+// Démarre une nouvelle session ou reprend une session existante
+session_start();
+
+?>
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -8,6 +14,15 @@
     <title>login</title>
 </head>
 <body>
+<?php
+    // Si la session contient l'erreur alors afficher le message correspondant 
+     if(!empty($_SESSION['nolog'])){
+     echo '<div class="alert alert-danger" role="alert">
+    '. $_SESSION ['nolog'].'
+    </div>';
+    $_SESSION['nolog'] = "";
+    }
+    ?>
 <h1>Connexion</h1>
 <div style="margin-top:5%" class="container shadow-lg p-3 mb-5 bg-white rounded">
 <form action="assets/auth/login.php" method="post">

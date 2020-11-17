@@ -2,8 +2,14 @@
 // on demarre la session
 session_start();
 
+// Si le mail et le mdp ne sont pas stocker dans la global session alors redirection pas login
+if(!isset($_SESSION['u_email']) && !isset($_SESSION['u_password'])){
+    $_SESSION['nolog'] = "Veuillez vous identifiez";
+    header('location:index.php');
+}
+
 // Est-ce que tout les noms de table existe et ne sont pas vide
-if($_POST){
+if($_POST && $_FILES){
     if(isset($_POST['lieux']) && !empty($_POST['lieux'])
     && isset($_POST['nom']) && !empty($_POST['nom'])
     && isset($_POST['reference']) && !empty($_POST['reference'])
@@ -12,7 +18,7 @@ if($_POST){
     && isset($_POST['garantie']) && !empty($_POST['garantie'])
     && isset($_POST['prix']) && !empty($_POST['prix'])
     && isset($_POST['conseil']) && !empty($_POST['conseil'])
-    && isset($_POST['ticket']) && !empty($_POST['ticket'])
+    && isset($_FILES['ticket']) && !empty($_FILES['ticket'])
     && isset($_POST['manuel'])){
             
             //On fait la connection à la base
@@ -32,6 +38,12 @@ if($_POST){
                 $ticket = strip_tags($_POST['ticket']);
                 $manuel = strip_tags($_POST['manuel']);
 
+                $uploadchemin = 'assets/imgticket/';
+                $uploadfichier = $uploadchemin . basename($_FILES['ticket']['name']);
+                if (!move_uploaded_file($_FILES['ticket']['tmp_name'], $uploadfichier)){
+                    $_SESSION['erreurticket'] = "Il y'a eu un probleme avec l'importation du ticket";
+                }
+
                 $sql = 'UPDATE `produits` SET `lieux`=:lieux, `nom`=:nom, `reference`=:reference, `categorie`=:categorie, `dateachat`=:dateachat, `garantie`=:garantie, `prix`=:prix, `conseil`=:conseil, `ticket`=:ticket, `manuel`=:manuel WHERE `id`=:id;';
 
                 $query = $db->prepare($sql);
@@ -45,7 +57,7 @@ if($_POST){
                 $query->bindValue(':garantie', $garantie, PDO::PARAM_STR);
                 $query->bindValue(':prix', $prix, PDO::PARAM_STR);
                 $query->bindValue(':conseil', $conseil, PDO::PARAM_STR);
-                $query->bindValue(':ticket', $ticket, PDO::PARAM_STR);
+                $query->bindValue(':ticket', $uploadfichier, PDO::PARAM_STR);
                 $query->bindValue(':manuel', $manuel, PDO::PARAM_STR);
 
                 $query->execute();
@@ -55,9 +67,6 @@ if($_POST){
                 require_once('assets/require/close.php');
 
                 header('Location:produit.php');
-
-           
-
 
     }else{
         $_SESSION['erreur'] = "Formulaire incomplet";
@@ -130,7 +139,7 @@ if(isset($_GET['id']) && !empty($_GET['id'])){
             </div>
             <div class="collapse navbar-collapse" id="navbarResponsive">
                 <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><a href="#" class="nav-link">Se déconnecter</a></li>
+                    <li class="nav-item"><a href="assets/require/deconnection.php" class="nav-link">Se déconnecter</a></li>
                 </ul>
             </div>
         </div>
@@ -145,13 +154,21 @@ if(isset($_GET['id']) && !empty($_GET['id'])){
                 $_SESSION['erreur'] = '';
         }
         ?>
+        <?php
+        if(!empty($_SESSION['erreurticket'])){
+            echo '<div class="alert alert-danger" role="alert">
+                    '. $_SESSION ['erreurticket'].'
+                </div>';
+                $_SESSION['erreurticket'] = '';
+        }
+        ?>
     <!--    start container -->
     <div class="container">
-        <h1 class="ml-5">Creer le produit</h1>
+        <h1 class="ml-5">Modifier le produit <br> <?= $produit['nom'] ?> </h1>
         <div class="row">
             <div class="col-6">
                 <!--              start form-->
-                <form method="POST">
+                <form method="POST" action="" enctype="multipart/form-data">
                     <!--                  start lieux-->
                     <div class="form-group">
                         <label for="">Lieux d'achat</label>
@@ -225,14 +242,15 @@ if(isset($_GET['id']) && !empty($_GET['id'])){
                     <!--                  end description-->
                     <!--                  start photo de ticket d'achat-->
                     <div class="form-group">
-                        <label for="">Photo du ticket d'achat</label>
-                        <input type="file" class="form-control" name="ticket">
+                        <label for="">Photo du ticket d'achat</label> <br>
+                        <input type="file" name="ticket">
+                        <img src="<?php echo "$produit[ticket]";?>" alt="ticket" width="100px">
                     </div>
                     <!--                  end photo du ticket d'achat-->
                     <!--                  start manuel d'utilisation-->
                     <div class="form-group">
                         <label for="">Manuel d'utilisation</label>
-                        <input type="file" class="form-control" name="manuel">
+                        <input type="text" class="form-control" name="manuel">
                     </div>
                     <!--                  end manuel d'utilisation-->
                     <!--                  start button submit-->

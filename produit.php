@@ -2,6 +2,12 @@
 //On démarre une session
 session_start();
 
+// Si le mail et le mdp ne sont pas stocker dans la global session alors redirection pas login
+if(!isset($_SESSION['u_email']) && !isset($_SESSION['u_password'])){
+    $_SESSION['nolog'] = "Veuillez vous identifiez";
+    header('location:index.php');
+}
+
 // On inclut la connexion à la base 
 require_once('assets/require/connect.php');
 
@@ -53,7 +59,7 @@ require_once ('assets/require/close.php');
             <div class="collapse navbar-collapse" id="navbarResponsive">
                 <ul class="navbar-nav ml-auto">
                     <!--boutton de deconnexion-->
-                    <li class="nav-item"><a href="#" class="nav-link">Se déconnecter</a></li>
+                    <li class="nav-item"><a href="assets/require/deconnection.php" class="nav-link">Se déconnecter</a></li>
                 </ul>
             </div>
 

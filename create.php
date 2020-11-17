@@ -2,8 +2,14 @@
 // on demarre la session
 session_start();
 
+// Si le mail et le mdp ne sont pas stocker dans la global session alors redirection pas login
+if(!isset($_SESSION['u_email']) && !isset($_SESSION['u_password'])){
+    $_SESSION['nolog'] = "Veuillez vous identifiez";
+    header('location:index.php');
+}
+
 // Est-ce que tout les noms de table existe et ne sont pas vide
-if($_POST){
+if($_POST && $_FILES){
     if(isset($_POST['lieux']) && !empty($_POST['lieux'])
     && isset($_POST['nom']) && !empty($_POST['nom'])
     && isset($_POST['reference']) && !empty($_POST['reference'])
@@ -12,7 +18,7 @@ if($_POST){
     && isset($_POST['garantie']) && !empty($_POST['garantie'])
     && isset($_POST['prix']) && !empty($_POST['prix'])
     && isset($_POST['conseil']) && !empty($_POST['conseil'])
-    && isset($_POST['ticket']) && !empty($_POST['ticket'])
+    && isset($_FILES['ticket']) && !empty($_FILES['ticket'])
     && isset($_POST['manuel'])){
             
             //On fait la connection à la base
@@ -31,6 +37,15 @@ if($_POST){
                 $ticket = strip_tags($_POST['ticket']);
                 $manuel = strip_tags($_POST['manuel']);
 
+                //Met dans la var le chemin ou je veux que le ticket soit sauvegarder
+                $uploadchemin = 'assets/imgticket/';
+                //On insert dans la var $uploadfile le chemin plus nom du fichier envoyer dans la $_FILES
+                $uploadfichier = $uploadchemin . basename($_FILES['ticket']['name']);
+                // Si le fichier télécharger n'est pas déplacé à l'endroit indiqué
+                if (!move_uploaded_file($_FILES['ticket']['tmp_name'], $uploadfichier)){
+                    $_SESSION['erreurticket'] = "Il y'a eu un problème avec l'importation du ticket";
+                }
+
                 $sql = 'INSERT INTO `produits` (`lieux`, `nom`, `reference`, `categorie`, `dateachat`, `garantie`, `prix`, `conseil`, `ticket`, `manuel`) VALUES (:lieux, :nom, :reference, :categorie, :dateachat, :garantie, :prix, :conseil, :ticket, :manuel)';
 
                 $query = $db->prepare($sql);
@@ -43,7 +58,7 @@ if($_POST){
                 $query->bindValue(':garantie', $garantie, PDO::PARAM_STR);
                 $query->bindValue(':prix', $prix, PDO::PARAM_STR);
                 $query->bindValue(':conseil', $conseil, PDO::PARAM_STR);
-                $query->bindValue(':ticket', $ticket, PDO::PARAM_STR);
+                $query->bindValue(':ticket', $uploadfichier, PDO::PARAM_STR);
                 $query->bindValue(':manuel', $manuel, PDO::PARAM_STR);
 
                 $query->execute();
@@ -96,7 +111,7 @@ if($_POST){
             </div>
             <div class="collapse navbar-collapse" id="navbarResponsive">
                 <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><a href="#" class="nav-link">Se déconnecter</a></li>
+                    <li class="nav-item"><a href="assets/require/deconnection.php" class="nav-link">Se déconnecter</a></li>
                 </ul>
             </div>
         </div>
@@ -111,13 +126,21 @@ if($_POST){
                 $_SESSION['erreur'] = '';
         }
         ?>
+         <?php
+        if(!empty($_SESSION['erreurticket'])){
+            echo '<div class="alert alert-danger" role="alert">
+                    '. $_SESSION ['erreurticket'].'
+                </div>';
+                $_SESSION['erreurticket'] = '';
+        }
+        ?>
     <!--    start container -->
     <div class="container">
         <h1 class="ml-5">Creer le produit</h1>
         <div class="row">
             <div class="col-6">
                 <!--              start form-->
-                <form method="POST">
+                <form method="POST" action="" enctype="multipart/form-data">
                     <!--                  start lieux-->
                     <div class="form-group">
                         <label for="">Lieux d'achat</label>
@@ -191,14 +214,14 @@ if($_POST){
                     <!--                  end description-->
                     <!--                  start photo de ticket d'achat-->
                     <div class="form-group">
-                        <label for="">Photo du ticket d'achat</label>
-                        <input type="file" class="form-control" name="ticket">
+                        <label for="">Photo du ticket d'achat</label> <br>
+                        <input type="file" name="ticket">
                     </div>
                     <!--                  end photo du ticket d'achat-->
                     <!--                  start manuel d'utilisation-->
                     <div class="form-group">
                         <label for="">Manuel d'utilisation</label>
-                        <input type="file" class="form-control" name="manuel">
+                        <input type="text" class="form-control" name="manuel">
                     </div>
                     <!--                  end manuel d'utilisation-->
                     <!--                  start button submit-->
